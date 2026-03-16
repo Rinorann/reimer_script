@@ -153,31 +153,97 @@ def execute_delete(state, name):
 
 
 def execute_show(state, target, name=None):
-    """Показать информацию"""
+    """Показать информацию подробно"""
+    
+    # Вспомогательная функция для отрисовки таблицы одного фрейма
+    def format_frame_report(f_name, f_wells):
+        res = f"🔬 Фрейм '{f_name}':\n"
+        res += "   Лунка   Dilution   OD\n"
+        # Сортируем лунки (например, A1, A2, B1...)
+        for well, data in sorted(f_wells.items()):
+            od = f"{data['od']:.3f}" if data['od'] else '--'
+            res += f"   {well:<7} {data['dilution']:<10} {od}\n"
+        return res
+
     if target == 'all':
         if not state['frames']:
-            return state, "📭 Нет фреймов"
+            return state, "📭 Нет загруженных фреймов"
         
-        report = "📋 ФРЕЙМЫ:\n"
-        for frame_name, wells in state['frames'].items():
-            dilutions = set(w['dilution'] for w in wells.values())
-            report += f"  • '{frame_name}': {len(wells)} лунок, dil: {sorted(dilutions)}\n"
+        # Собираем отчеты по всем фреймам через разделитель
+        reports = []
+        for f_name, f_wells in state['frames'].items():
+            reports.append(format_frame_report(f_name, f_wells))
         
+        full_report = "\n" + "\n---\n".join(reports)
+        
+        # Добавим общую статистику в конец
         free = 96 - len(state['_index'])
-        report += f"\n🟢 Свободно лунок: {free}/96"
-        
+        full_report += f"\n\n🟢 Свободно лунок: {free}/96"
+        return state, full_report
+
     elif target == 'frame':
         if name not in state['frames']:
             raise ValueError(f"Фрейм '{name}' не существует")
         
-        wells = state['frames'][name]
-        report = f"🔬 Фрейм '{name}':\n"
-        report += "   Лунка  Dilution  OD\n"
-        for well, data in sorted(wells.items()):
-            od = f"{data['od']:.3f}" if data['od'] else '--'
-            report += f"   {well:<6} {data['dilution']:<8} {od}\n"
+        report = format_frame_report(name, state['frames'][name])
+        return state, report
     
-    return state, report
+    elif target == 'cal':
+        cal_name = name if name else 'main'
+        if cal_name not in state['calibrations']:
+            return state, f"❌ Калибровка '{cal_name}' не найдена."
+        
+        cal_data = state['calibrations'][cal_name]
+        
+        # Шапка
+        report = f"\n{'='*45}\n"
+        report += f"📊 ОТЧЕТ ПО КАЛИБРОВКЕ: '{cal_name}'\n"
+        report += f"{'='*45}\n"
+        
+        # 1. Блок Бейзлайнов (Холостые пробы)
+        report += "📍 Baseline (Blanks):\n"
+        if not cal_data['baseline']:
+            report += "   (не заданы)\n"
+        else:
+            bl_entries = []
+            for b_well, data in sorted(cal_data['baseline'].items()):
+                val = data.get('od')
+                od_str = f"{val:.3f}" if isinstance(val, (int, float)) else "--"
+                bl_entries.append(f"{b_well}[{od_str}]")
+            
+            # Выводим бейзлайны списком по 4 в ряд, чтобы не растягивать вертикаль
+            for i in range(0, len(bl_entries), 4):
+                report += "   " + " | ".join(bl_entries[i:i+4]) + "\n"
+        
+        report += f"{'-'*45}\n"
+        
+        # 2. Блок Стандартов
+        report += "🧪 Стандарты концентрации:\n"
+        report += f"   {'Лунка':<10} {'Конц. (nM)':<15} {'OD':<10}\n"
+        report += f"   {'·'*38}\n"
+        
+        standards = cal_data['standards']
+        if not standards:
+            report += "   (не заданы)\n"
+        else:
+            for well, data in sorted(standards.items()):
+                # Берем OD из данных стандарта
+                val = data.get('od')
+                od_str = f"{val:.3f}" if isinstance(val, (int, float)) else "  --  "
+                conc_str = f"{data['conc']:.2f}"
+                report += f"   {well:<10} {conc_str:<15} {od_str:<10}\n"
+            
+        report += f"{'='*45}\n"
+        
+        # 3. Инфа по аппроксимации
+        if cal_data.get('linear_fit'):
+            report += f"📈 Результат аппроксимации:\n"
+            report += f"   {cal_data['linear_fit']}\n"
+            report += f"{'='*45}\n"
+            
+        return state, report
+
+    return state, "Неизвестная цель для show"
 
 
 

@@ -1,5 +1,7 @@
 from .frame_parsers import *
 from .plate_parser import parse_full_load
+from .calibration_parsers import *
+from .wizard_parser import *
 def parse_command(text):
     """
     'add "образец 1" dil 20 B1:B3, dil 10 C1:C3'
@@ -37,5 +39,11 @@ def parse_command(text):
         return {'action': 'undo'}
     elif action == 'load': 
         return parse_full_load(rest)
+    elif action == 'cal':
+        return parse_calibration(rest)
+    elif action == 'bl':
+        return parse_baseline(rest)
+    elif action == 'wizard':
+        return parse_wizard(rest)
     else:
         raise ValueError(f'Неизвестная команда: {action}')

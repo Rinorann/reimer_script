@@ -108,33 +108,50 @@ def parse_show(rest):
     """
     Парсит команду show.
     
-    Вход: '"образец 1"' или 'all'
+    Вход: 'all', 'cal', или имя фрейма
     Выход: {
         'action': 'show',
-        'target': 'frame',  # или 'all'
-        'name': 'образец 1'  # только для frame
+        'target': 'all' | 'cal' | 'frame',
+        'name': 'имя' 
     }
     """
+    # Очищаем от пробелов
     rest = rest.strip()
     
-    if rest == 'all':
+    if not rest:
+        raise ValueError("Команда show не может быть пустой. Введите 'all', 'cal' или имя фрейма.")
+
+    rest_lower = rest.lower()
+
+    # 1. Показать всё
+    if rest_lower == 'all':
         return {
             'action': 'show',
             'target': 'all'
         }
     
-    # Если в кавычках - показываем фрейм
-    name_match = re.search(r'"([^"]+)"', rest)
-    if name_match:
+    # 2. Показать калибровку (основную)
+    if rest_lower == 'cal' or rest_lower == 'calibration':
         return {
             'action': 'show',
-            'target': 'frame',
-            'name': name_match.group(1)
+            'target': 'cal',
+            'name': 'main'  # Задаем имя по умолчанию
         }
-    
-    raise ValueError(
-        "show требует 'all' или имя фрейма в кавычках: show all / show \"название\"\n"
-        f"Получено: {rest}"
-    )
+        
+    # 2.1. Если в будущем будет несколько калибровок (например, show cal my_cal)
+    if rest_lower.startswith('cal ') or rest_lower.startswith('calibration '):
+        parts = rest.split(maxsplit=1)
+        return {
+            'action': 'show',
+            'target': 'cal',
+            'name': parts[1].strip()
+        }
+
+    # 3. Всё остальное считаем именем фрейма
+    return {
+        'action': 'show',
+        'target': 'frame',
+        'name': rest
+    }
 def parse_erase(rest):
     pass

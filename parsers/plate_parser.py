@@ -9,13 +9,10 @@ def parse_full_load(rest):
         'sheet_name': 'Sheet1'
     }
     """
-    tokens = rest.strip().split()
-    if len(tokens) !=2:
-                return None, "❌Образец: load plate.xlsx Sheet1"
-    file_path, sheet_name = tokens
+    tokens = rest.strip()
+    file_path = tokens
     
     return {
         'action': 'load_full',
-        'file_path': file_path,
-        'sheet_name': sheet_name
+        'file_path': file_path
     }

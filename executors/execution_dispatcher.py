@@ -1,5 +1,7 @@
 from .frame_executors import *
 from .plate_executor import execute_load_full
+from .calibration_executors import *
+from .wizard_executor import *
 def execute_command(state, command):
     """Дирижер исполнителей"""
     action = command['action']
@@ -22,8 +24,13 @@ def execute_command(state, command):
     elif action == 'show':
         return execute_show(state, command['target'], command.get('name'))
     elif action == 'load_full':
-        return execute_load_full(state, command['file_path'], command['sheet_name'])
-    
+        return execute_load_full(state, command['file_path'])
+    elif action == 'calibration':
+        return execute_calibration(state, command['wells'], command['concs'])
+    elif action == 'baseline':
+        return execute_baseline(state, command['wells'])
+    elif action == 'wizards':
+        return execute_wizard(state)
     elif action == 'undo':
         return state, "Undo"
     

@@ -1,14 +1,15 @@
 from utils import load_full_plate
 from utils import StateManager
-def execute_load_full(state, file_path, sheet_name):
+def execute_load_full(state, file_path):
     """
     Загружает данные планшета из Excel и сохраняет в глобальную переменную.
     Не изменяет state, только загружает данные в память.
     """
 
     try:
+        
         # Загружаем данные планшета
-        plate_data = load_full_plate(file_path, sheet_name)
+        plate_data = load_full_plate(file_path)
         
         # 👇 СОХРАНЯЕМ В STATEMANAGER (вместо глобальной переменной)
         StateManager.set_plate(plate_data, file_path)
@@ -18,7 +19,6 @@ def execute_load_full(state, file_path, sheet_name):
         
         # Формируем отчет
         report = f"📥 Загружен планшет: {file_path}\n"
-        report += f"   Лист: {sheet_name}\n"
         report += f"   ✅ Всего лунок: {stats['total']}\n"
         report += f"   📊 Значений OD: {stats['filled']}\n"
         report += f"   ⚠️ Пустых/нет данных: {stats['empty']}\n"

@@ -1,11 +1,13 @@
 from openpyxl import load_workbook
 
-def load_full_plate(file_path, sheet_name):
+def load_full_plate(file_path):
     '''
-    принимает на вход путь к файлу с синерджи и название листа в нём.
+    принимает на вход путь к файлу с синерджи.
     выдаёт словарь типа 'A1': od для всего планшета 8x12.
     '''
     wb = load_workbook(file_path, data_only=True)
+    sheet_names = wb.sheetnames
+    sheet_name = sheet_names[0]
     ws = wb[sheet_name]
     
     # 1. Ищем "Результаты" в колонке A
